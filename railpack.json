@@ -1,0 +1,9 @@
+{
+  "build": {
+    "builder": "java",
+    "buildCommand": "./mvnw clean package -DskipTests"
+  },
+  "deploy": {
+    "startCommand": "java -jar target/*.jar"
+  }
+}
