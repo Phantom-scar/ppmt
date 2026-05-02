@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>User Dashboard - PPMT</title>
+    <style>body{font-family:Arial,Helvetica,sans-serif;margin:20px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #ddd;padding:8px} th{background:#f4f4f4}</style>
+</head>
+<body>
+<h1>User Dashboard</h1>
+<div id="status"></div>
+<h2>Your Profile</h2>
+<div id="profile"></div>
+<h2>Your Projects</h2>
+<div id="projects"></div>
+<h2>Your Tasks</h2>
+<div id="tasks"></div>
+<script>
+const API_URL = '/api';
+const token = localStorage.getItem('ppmttoken');
+if (!token) { document.getElementById('status').innerText = 'Not logged in'; }
+else { loadProfile(); loadProjects(); loadTasks(); }
+async function loadProfile(){
+    try{
+        const r = await fetch(`${API_URL}/users/me`, { headers:{ 'Authorization': `Bearer ${token}` } });
+        if (!r.ok) { document.getElementById('profile').innerText='Failed to load'; return; }
+        const u = await r.json();
+        document.getElementById('profile').innerText = `${u.fullName} (${u.username}) - ${u.role}`;
+    }catch(e){ document.getElementById('profile').innerText = 'Error: '+e.message }
+}
+async function loadProjects(){
+    try{
+        const r = await fetch(`${API_URL}/projects`, { headers:{ 'Authorization': `Bearer ${token}` } });
+        if (!r.ok) { document.getElementById('projects').innerText='Failed to load'; return; }
+        const arr = await r.json();
+        if (arr.length===0) { document.getElementById('projects').innerText='No projects'; return; }
+        document.getElementById('projects').innerHTML = '<ul>'+arr.map(p=>`<li>${p.projectName} (${p.projectIdentifier})</li>`).join('')+'</ul>';
+    }catch(e){ document.getElementById('projects').innerText = 'Error: '+e.message }
+}
+async function loadTasks(){
+    try{
+        const r = await fetch(`${API_URL}/tasks`, { headers:{ 'Authorization': `Bearer ${token}` } });
+        if (!r.ok) { document.getElementById('tasks').innerText='Failed to load'; return; }
+        const arr = await r.json();
+        if (arr.length===0) { document.getElementById('tasks').innerText='No tasks'; return; }
+        document.getElementById('tasks').innerHTML = '<table><thead><tr><th>Title</th><th>Status</th><th>Assignee</th></tr></thead><tbody>'+arr.map(t=>`<tr><td>${t.title}</td><td>${t.status}</td><td>${t.assigneeUsername||''}</td></tr>`).join('')+'</tbody></table>';
+    }catch(e){ document.getElementById('tasks').innerText = 'Error: '+e.message }
+}
+</script>
+</body>
+</html>

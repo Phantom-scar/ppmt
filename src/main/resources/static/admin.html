@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Admin - PPMT</title>
+    <style>
+        body{font-family:Arial,Helvetica,sans-serif;margin:20px}
+        table{width:100%;border-collapse:collapse}
+        th,td{border:1px solid #ddd;padding:8px}
+        th{background:#f4f4f4}
+        .btn{padding:6px 10px;margin-right:6px}
+    </style>
+</head>
+<body>
+<h1>Admin User Management</h1>
+<div id="status"></div>
+<div id="users"></div>
+<script>
+const API_URL = '/api';
+const token = localStorage.getItem('ppmttoken');
+if (!token) {
+    document.getElementById('status').innerText = 'Not logged in. Please login via the main app.';
+} else {
+    loadUsers();
+}
+async function loadUsers(){
+    try{
+        const r = await fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!r.ok) { document.getElementById('status').innerText = 'Failed to load users'; return; }
+        const users = await r.json();
+        if (users.length===0){ document.getElementById('users').innerHTML='<div>No users</div>'; return; }
+        const html = ['<table><thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Action</th></tr></thead><tbody>'];
+        for(const u of users){
+            html.push(`<tr><td>${u.username}</td><td>${u.fullName}</td><td id="role-${u.id}">${u.role}</td><td>`+
+                `<button class="btn" onclick="changeRole('${u.id}','ADMIN')">Promote</button>`+
+                `<button class="btn" onclick="changeRole('${u.id}','MEMBER')">Demote</button></td></tr>`);
+        }
+        html.push('</tbody></table>');
+        document.getElementById('users').innerHTML = html.join('');
+    }catch(e){ document.getElementById('status').innerText = 'Error: '+e.message }
+}
+async function changeRole(userId, role){
+    try{
+        const r = await fetch(`${API_URL}/users/${userId}/role`, { method:'PUT', headers:{ 'Content-Type':'application/json','Authorization':`Bearer ${token}` }, body: JSON.stringify({ role }) });
+        if (!r.ok) { alert('Failed'); return; }
+        const updated = await r.json();
+        document.getElementById('role-'+updated.id).textContent = updated.role;
+        alert('Updated');
+    }catch(e){ alert('Error: '+e.message) }
+}
+</script>
+</body>
+</html>
